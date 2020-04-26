@@ -804,4 +804,34 @@ class TagRipperTest < Test::Unit::TestCase
     assert_equal 'Foo', tags[0][:name]
     assert_equal 'calculate', tags[1][:name]
   end
+
+  def test_method_defined_in_block
+    tags = extract(<<-EOC)
+      RSpec.describe do
+        def some_method
+          a.b { do_smth }
+        end
+      end
+
+      some_cool_dsl args do
+        def another_method
+          do_smth
+        end
+      end
+
+      another_cool_dsl(args) do
+        def third_method
+          do_smth
+        end
+      end
+    EOC
+
+    assert_equal 3, tags.size
+    assert_equal 'some_method', tags[0][:name]
+    assert_equal 'Object#some_method', tags[0][:full_name]
+    assert_equal 'another_method', tags[1][:name]
+    assert_equal 'Object#another_method', tags[1][:full_name]
+    assert_equal 'third_method', tags[2][:name]
+    assert_equal 'Object#third_method', tags[2][:full_name]
+  end
 end

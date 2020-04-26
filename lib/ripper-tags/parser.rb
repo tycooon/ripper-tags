@@ -285,8 +285,9 @@ class Parser < Ripper
   end
 
   def on_method_add_block(method, body)
-    return unless method
-    if %w[class_eval module_eval].include?(method[2]) && body
+    if method.nil?
+      body ? body.last : nil
+    elsif %w[class_eval module_eval].include?(method[2]) && body
       [:class_eval, [
         method[1].is_a?(Array) ? method[1][0] : method[1],
         method[3]
@@ -296,6 +297,8 @@ class Parser < Ripper
       call = method.dup
       call[4] = body.last
       call
+    elsif :fcall == method[0] && body
+      body.last
     else
       super
     end
@@ -538,7 +541,7 @@ end
     end
 
     def on_call(*args)
-      process args
+      process(args)
     end
 
     def ignore(*args)
