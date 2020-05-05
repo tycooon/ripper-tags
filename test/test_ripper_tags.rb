@@ -808,30 +808,23 @@ class TagRipperTest < Test::Unit::TestCase
   def test_method_defined_in_block
     tags = extract(<<-EOC)
       RSpec.describe do
-        def some_method
-          a.b { do_smth }
-        end
+        def test_method; end
       end
 
-      some_cool_dsl args do
-        def another_method
-          do_smth
+      module M
+        included do
+          def included_method; end
+          attr_accessor :cache
         end
-      end
 
-      another_cool_dsl(args) do
-        def third_method
-          do_smth
+        %w[sub gsub].each do |m|
+          define_method("\#{m}!") {}
+          attr_reader m
         end
       end
     EOC
 
-    assert_equal 3, tags.size
-    assert_equal 'some_method', tags[0][:name]
-    assert_equal 'Object#some_method', tags[0][:full_name]
-    assert_equal 'another_method', tags[1][:name]
-    assert_equal 'Object#another_method', tags[1][:full_name]
-    assert_equal 'third_method', tags[2][:name]
-    assert_equal 'Object#third_method', tags[2][:full_name]
+    expected = ["Object#test_method", "M", "M#included_method", "M#cache", "M#cache="]
+    assert_equal expected, tags.map { |t| t[:full_name] }
   end
 end
